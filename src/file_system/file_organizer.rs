@@ -13,42 +13,41 @@ Use relative and absolute paths
 program does not go down nor up the file system.
 */
 
-use std::{
-    fmt::{Debug, Formatter},
-    fs,
-    path::Path,
-};
+use std::fs;
+use std::path::Path;
 
-const FOLDER_NAME: &str = "organized";
+const ORGANIZED: &str = "organized"; // specifies where folders with extension names will go. 
 
 pub fn start_file_organizer() {
-    //create folder organized where all folder with extension names are kept
-    fs::create_dir_all(format!("./{}", FOLDER_NAME))
-        .expect("Failed to create folder named organized");
-    // go through all file names looking at their extension
+    //create organized folder
+    fs::create_dir_all(ORGANIZED)
+        .map_err(|e| format!("Failed to create folder {}", ORGANIZED))
+        .expect("failed to create 'organized' folder");
 
-    if let Ok(entries) = fs::read_dir("./") {
-        for entry in entries.flatten() {
-            let file_path = entry.path();           
+    //for each file in the current directory, create a folder with the same extension name and move it in there.
+    for entry in fs::read_dir("./").expect("Failed to read dir") {
+        let dir = entry.expect("Result returned Error - DirEntry");
 
-            if !file_path.is_file() {
-              continue;
+        if dir.path().is_file() {
+            // create a folder with the same extension name and move it in there.                        
+            
+            match dir.path().extension() {
+                None => {},
+                Some(ext) => {                    
+                    println!("{:?}", ext);
+                    let p = format!("./{}/{}", ORGANIZED, ext.to_str().unwrap());
+                    let target = Path::new(&p);
+                    
+                    fs::create_dir_all(target).expect("Failed to create folder with specific extension name"); 
+
+                    let new_name = target.join(dir.path());
+                    println!("{:?}\n{:?}", dir.path(), new_name);
+                                        
+                    fs::rename(dir.path(), new_name).expect("Failed to rename file");
+
+
+                }
             }
-
-            let ext = match file_path.extension() {
-                  Some(e) => e,
-                  None => continue
-            };
-            let folder_path = Path::new(FOLDER_NAME).join(ext);
-            if !folder_path.exists() {
-                fs::create_dir_all(&folder_path).expect("Failed to create organized folder");
-            }
-
-            let new_file_name = folder_path.join(file_path.file_name().expect("Missing file name"));
-
-            println!("Moving file to {:?}", folder_path);
-
-            fs::rename(&file_path, &new_file_name).expect("Failed to create message");
         }
     }
 }
