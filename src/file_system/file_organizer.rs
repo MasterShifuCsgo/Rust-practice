@@ -21,7 +21,7 @@ const ORGANIZED: &str = "organized"; // specifies where folders with extension n
 pub fn start_file_organizer() {
     //create organized folder
     fs::create_dir_all(ORGANIZED)
-        .map_err(|e| format!("Failed to create folder {}", ORGANIZED))
+        .map_err(|e| format!("Failed to create folder {}\n Error: {}", ORGANIZED, e))
         .expect("failed to create 'organized' folder");
 
     //for each file in the current directory, create a folder with the same extension name and move it in there.
